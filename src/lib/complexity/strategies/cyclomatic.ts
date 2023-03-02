@@ -36,11 +36,20 @@ function fromJavaScript(path: string): number {
 
 function fromTypeScript(path: string): number {
   const content = readFileSync(path, { encoding: "utf8" });
-  const babelResult = transformSync(content, {
-    plugins: ["@babel/plugin-transform-typescript"],
-    presets: ["@babel/preset-env"],
-  });
-  if (!babelResult) throw new Error(`Error while parsing file ${path}`);
-  const result = escomplex.analyse(babelResult.code);
-  return result.aggregate.cyclomatic;
+  let score = 0;
+  try {
+    const babelResult = transformSync(content, {
+      plugins: [
+        "@babel/plugin-transform-typescript",
+        ["@babel/plugin-proposal-decorators", { legacy: true }],
+      ],
+      presets: ["@babel/preset-env"],
+    });
+    if (!babelResult) throw new Error(`Error while parsing file ${path}`);
+    const result = escomplex.analyse(babelResult.code);
+    score = result.aggregate.cyclomatic;
+  } catch (e) {
+    console.log(e);
+  }
+  return score
 }
